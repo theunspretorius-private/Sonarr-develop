@@ -1,0 +1,90 @@
+import React, { useCallback, useState } from 'react';
+import SeriesMonitoringOptionsPopoverContent from 'AddSeries/SeriesMonitoringOptionsPopoverContent';
+import { useSelect } from 'App/Select/SelectContext';
+import Form from 'Components/Form/Form';
+import FormInput from 'Components/Form/FormInput';
+import FormLabel from 'Components/Form/FormLabel';
+import FormRow from 'Components/Form/FormRow';
+import Icon from 'Components/Icon';
+import Button from 'Components/Link/Button';
+import ModalBody from 'Components/Modal/ModalBody';
+import ModalContent from 'Components/Modal/ModalContent';
+import ModalFooter from 'Components/Modal/ModalFooter';
+import ModalHeader from 'Components/Modal/ModalHeader';
+import Popover from 'Components/Tooltip/Popover';
+import { icons, inputTypes, tooltipPositions } from 'Helpers/Props';
+import translate from 'Utilities/String/translate';
+import styles from './ChangeMonitoringModalContent.module.css';
+
+const NO_CHANGE = 'noChange';
+
+export interface ChangeMonitoringModalContentProps {
+  saveError?: object;
+  onSavePress(monitor: string): void;
+  onModalClose(): void;
+}
+
+function ChangeMonitoringModalContent({
+  onSavePress,
+  onModalClose,
+  ...otherProps
+}: ChangeMonitoringModalContentProps) {
+  const [monitor, setMonitor] = useState(NO_CHANGE);
+  const { selectedCount } = useSelect();
+
+  const onInputChange = useCallback(
+    ({ value }: { value: string }) => {
+      setMonitor(value);
+    },
+    [setMonitor]
+  );
+
+  const onSavePressWrapper = useCallback(() => {
+    onSavePress(monitor);
+  }, [monitor, onSavePress]);
+
+  return (
+    <ModalContent onModalClose={onModalClose}>
+      <ModalHeader>{translate('MonitorEpisodes')}</ModalHeader>
+      <ModalBody>
+        <p className={styles.intro}>{translate('MonitorEpisodesModalInfo')}</p>
+
+        <Form {...otherProps}>
+          <FormRow>
+            <FormLabel>
+              {translate('Monitoring')}
+
+              <Popover
+                anchor={<Icon className={styles.labelIcon} name={icons.INFO} />}
+                title={translate('MonitoringOptions')}
+                body={<SeriesMonitoringOptionsPopoverContent />}
+                position={tooltipPositions.RIGHT}
+              />
+            </FormLabel>
+
+            <FormInput
+              type={inputTypes.MONITOR_EPISODES_SELECT}
+              name="monitor"
+              value={monitor}
+              includeNoChange={true}
+              onChange={onInputChange}
+            />
+          </FormRow>
+        </Form>
+      </ModalBody>
+      <ModalFooter className={styles.modalFooter}>
+        <div className={styles.selected}>
+          {translate('CountSeriesSelected', { count: selectedCount })}
+        </div>
+
+        <div className={styles.buttons}>
+          <Button onPress={onModalClose}>{translate('Cancel')}</Button>
+
+          <Button onPress={onSavePressWrapper}>{translate('Save')}</Button>
+        </div>
+      </ModalFooter>
+    </ModalContent>
+  );
+}
+
+export default ChangeMonitoringModalContent;

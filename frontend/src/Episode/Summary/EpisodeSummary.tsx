@@ -1,0 +1,166 @@
+import { useQueryClient } from '@tanstack/react-query';
+import React, { useCallback, useEffect } from 'react';
+import Icon from 'Components/Icon';
+import Label from 'Components/Label';
+import Column from 'Components/Table/Column';
+import Table from 'Components/Table/Table';
+import TableBody from 'Components/Table/TableBody';
+import Episode from 'Episode/Episode';
+import useEpisode, { EpisodeEntity } from 'Episode/useEpisode';
+import { useEpisodeFile } from 'EpisodeFile/EpisodeFileProvider';
+import { useDeleteEpisodeFile } from 'EpisodeFile/useEpisodeFiles';
+import { icons, sizes } from 'Helpers/Props';
+import Series from 'Series/Series';
+import { useSingleSeries } from 'Series/useSeries';
+import QualityProfileName from 'Settings/Profiles/Quality/QualityProfileName';
+import translate from 'Utilities/String/translate';
+import EpisodeAiring from './EpisodeAiring';
+import EpisodeFileRow from './EpisodeFileRow';
+import styles from './EpisodeSummary.module.css';
+
+const COLUMNS: Column[] = [
+  {
+    name: 'path',
+    label: () => translate('Path'),
+    isSortable: false,
+    isVisible: true,
+  },
+  {
+    name: 'size',
+    label: () => translate('Size'),
+    isSortable: false,
+    isVisible: true,
+  },
+  {
+    name: 'languages',
+    label: () => translate('Languages'),
+    isSortable: false,
+    isVisible: true,
+  },
+  {
+    name: 'quality',
+    label: () => translate('Quality'),
+    isSortable: false,
+    isVisible: true,
+  },
+  {
+    name: 'customFormats',
+    label: () => translate('Formats'),
+    isSortable: false,
+    isVisible: true,
+  },
+  {
+    name: 'customFormatScore',
+    label: React.createElement(Icon, {
+      name: icons.SCORE,
+      title: () => translate('CustomFormatScore'),
+    }),
+    isSortable: true,
+    isVisible: true,
+  },
+  {
+    name: 'actions',
+    label: '',
+    isSortable: false,
+    isVisible: true,
+  },
+];
+
+interface EpisodeSummaryProps {
+  seriesId: number;
+  episodeId: number;
+  episodeEntity: EpisodeEntity;
+  episodeFileId?: number;
+}
+
+function EpisodeSummary({
+  seriesId,
+  episodeId,
+  episodeEntity,
+  episodeFileId,
+}: EpisodeSummaryProps) {
+  const queryClient = useQueryClient();
+  const { qualityProfileId, network } = useSingleSeries(seriesId) as Series;
+
+  const { airDateUtc, overview } = useEpisode(
+    episodeId,
+    episodeEntity
+  ) as Episode;
+
+  const {
+    path,
+    mediaInfo,
+    size,
+    languages,
+    quality,
+    qualityCutoffNotMet,
+    customFormats,
+    customFormatScore,
+  } = useEpisodeFile(episodeFileId) ?? {};
+
+  const { deleteEpisodeFile } = useDeleteEpisodeFile(
+    episodeFileId!,
+    episodeEntity
+  );
+
+  const handleDeleteEpisodeFile = useCallback(() => {
+    deleteEpisodeFile();
+  }, [deleteEpisodeFile]);
+
+  useEffect(() => {
+    if (episodeFileId && !path) {
+      queryClient.invalidateQueries({ queryKey: ['/episodeFile'] });
+    }
+  }, [episodeFileId, path, queryClient]);
+
+  const hasOverview = !!overview;
+
+  return (
+    <div>
+      <div className={styles.meta}>
+        <div className={styles.metaItem}>
+          <span className={styles.metaLabel}>{translate('Airs')}</span>
+
+          <div className={styles.metaValue}>
+            <EpisodeAiring airDateUtc={airDateUtc} network={network} />
+          </div>
+        </div>
+
+        <div className={styles.metaItem}>
+          <span className={styles.metaLabel}>
+            {translate('QualityProfile')}
+          </span>
+
+          <Label outline={true} size={sizes.MEDIUM}>
+            <QualityProfileName qualityProfileId={qualityProfileId} />
+          </Label>
+        </div>
+      </div>
+
+      <div className={styles.overview}>
+        {hasOverview ? overview : translate('NoEpisodeOverview')}
+      </div>
+
+      {path ? (
+        <Table columns={COLUMNS}>
+          <TableBody>
+            <EpisodeFileRow
+              path={path}
+              size={size!}
+              languages={languages!}
+              quality={quality!}
+              qualityCutoffNotMet={qualityCutoffNotMet!}
+              customFormats={customFormats!}
+              customFormatScore={customFormatScore!}
+              mediaInfo={mediaInfo!}
+              columns={COLUMNS}
+              onDeleteEpisodeFile={handleDeleteEpisodeFile}
+            />
+          </TableBody>
+        </Table>
+      ) : null}
+    </div>
+  );
+}
+
+export default EpisodeSummary;

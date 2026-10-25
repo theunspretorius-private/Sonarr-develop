@@ -1,0 +1,103 @@
+using FluentAssertions;
+using Moq;
+using NUnit.Framework;
+using NzbDrone.Core.Languages;
+using NzbDrone.Core.MetadataSource;
+using NzbDrone.Core.MetadataSource.SkyHook;
+using NzbDrone.Core.Test.Framework;
+using NzbDrone.Core.Tv;
+using NzbDrone.Test.Common;
+using NzbDrone.Test.Common.Categories;
+
+namespace NzbDrone.Core.Test.MetadataSource.SkyHook
+{
+    [TestFixture]
+    [IntegrationTest]
+    public class SkyHookProxySearchFixture : CoreTest<SkyHookProxy>
+    {
+        [SetUp]
+        public void Setup()
+        {
+            UseRealHttp();
+        }
+
+        [TestCase("The Simpsons", "The Simpsons")]
+        [TestCase("South Park", "South Park")]
+        [TestCase("Franklin & Bash", "Franklin & Bash")]
+        [TestCase("House", "House")]
+        [TestCase("Mr. D", "Mr. D")]
+        [TestCase("Rob & Big", "Rob & Big")]
+        [TestCase("M*A*S*H", "M*A*S*H")]
+
+        // [TestCase("imdb:tt0436992", "Doctor Who (2005)")]
+        [TestCase("tvdb:78804", "Doctor Who (2005)")]
+        [TestCase("tvdbid:78804", "Doctor Who (2005)")]
+        [TestCase("tvdbid: 78804 ", "Doctor Who (2005)")]
+        public void successful_search(string title, string expected)
+        {
+            var result = Subject.SearchForNewSeries(title, Language.English);
+
+            result.Should().NotBeEmpty();
+
+            result[0].Title.Should().Be(expected);
+
+            ExceptionVerification.IgnoreWarns();
+        }
+
+        [TestCase("tt0496424", "30 Rock")]
+        public void should_search_by_imdb(string title, string expected)
+        {
+            var result = Subject.SearchForNewSeriesByImdbId(title, Language.English);
+
+            result.Should().NotBeEmpty();
+
+            result[0].Title.Should().Be(expected);
+
+            ExceptionVerification.IgnoreWarns();
+        }
+
+        [TestCase("4565se")]
+        public void should_not_search_by_imdb_if_invalid(string title)
+        {
+            var result = Subject.SearchForNewSeriesByImdbId(title, Language.English);
+            result.Should().BeEmpty();
+
+            Mocker.GetMock<ISearchForNewSeries>()
+                  .Verify(v => v.SearchForNewSeries(It.IsAny<string>(), It.IsAny<Language>()), Times.Never());
+
+            ExceptionVerification.IgnoreWarns();
+        }
+
+        [TestCase("tvdbid:")]
+        [TestCase("tvdbid: 99999999999999999999")]
+        [TestCase("tvdbid: 0")]
+        [TestCase("tvdbid: -12")]
+        [TestCase("tvdbid:289578")]
+        [TestCase("adjalkwdjkalwdjklawjdlKAJD")]
+        public void no_search_result(string term)
+        {
+            var result = Subject.SearchForNewSeries(term, Language.English);
+            result.Should().BeEmpty();
+
+            ExceptionVerification.IgnoreWarns();
+        }
+
+        [TestCase("tvdbid:78804")]
+        [TestCase("Doctor Who")]
+        public void should_return_existing_series_if_found(string term)
+        {
+            const int tvdbId = 78804;
+            var existingSeries = new Series
+            {
+                TvdbId = tvdbId
+            };
+
+            Mocker.GetMock<ISeriesService>().Setup(c => c.FindByTvdbId(tvdbId)).Returns(existingSeries);
+
+            var result = Subject.SearchForNewSeries("tvdbid: " + tvdbId, Language.English);
+
+            result.Should().Contain(existingSeries);
+            result.Should().ContainSingle(c => c.TvdbId == tvdbId);
+        }
+    }
+}

@@ -1,0 +1,107 @@
+import React, { useCallback, useState } from 'react';
+import Alert from 'Components/Alert';
+import Form from 'Components/Form/Form';
+import FormInput from 'Components/Form/FormInput';
+import FormLabel from 'Components/Form/FormLabel';
+import FormRow from 'Components/Form/FormRow';
+import Button from 'Components/Link/Button';
+import LoadingIndicator from 'Components/Loading/LoadingIndicator';
+import ModalBody from 'Components/Modal/ModalBody';
+import ModalContent from 'Components/Modal/ModalContent';
+import ModalFooter from 'Components/Modal/ModalFooter';
+import ModalHeader from 'Components/Modal/ModalHeader';
+import { inputTypes, kinds } from 'Helpers/Props';
+import Language from 'Language/Language';
+import { useFilteredLanguages } from 'Language/useLanguages';
+import translate from 'Utilities/String/translate';
+import styles from './SelectLanguageModalContent.module.css';
+
+interface SelectLanguageModalContentProps {
+  languageIds: number[];
+  modalTitle: string;
+  onLanguagesSelect(languages: Language[]): void;
+  onModalClose(): void;
+}
+
+function SelectLanguageModalContent(props: SelectLanguageModalContentProps) {
+  const { modalTitle, onLanguagesSelect, onModalClose } = props;
+
+  const {
+    data: items = [],
+    isFetching,
+    isFetched: isPopulated,
+    error,
+  } = useFilteredLanguages({
+    Any: true,
+    Original: true,
+  });
+
+  const [languageIds, setLanguageIds] = useState(props.languageIds);
+
+  const onLanguageChange = useCallback(
+    ({ name, value }: { name: string; value: boolean }) => {
+      const changedId = parseInt(name);
+
+      let newLanguages = [...languageIds];
+
+      if (value) {
+        newLanguages.push(changedId);
+      } else {
+        newLanguages = languageIds.filter((i) => i !== changedId);
+      }
+
+      setLanguageIds(newLanguages);
+    },
+    [languageIds, setLanguageIds]
+  );
+
+  const onLanguagesSelectWrapper = useCallback(() => {
+    const languages = items.filter((lang) => languageIds.includes(lang.id));
+
+    onLanguagesSelect(languages);
+  }, [items, languageIds, onLanguagesSelect]);
+
+  return (
+    <ModalContent onModalClose={onModalClose}>
+      <ModalHeader>
+        {translate('SelectLanguageModalTitle', { modalTitle })}
+      </ModalHeader>
+
+      <ModalBody>
+        {isFetching ? <LoadingIndicator /> : null}
+
+        {!isFetching && error ? (
+          <Alert kind={kinds.DANGER}>{translate('LanguagesLoadError')}</Alert>
+        ) : null}
+
+        {isPopulated && !error ? (
+          <Form>
+            {items.map((language) => {
+              return (
+                <FormRow key={language.id} className={styles.languageInput}>
+                  <FormLabel>{language.name}</FormLabel>
+                  <FormInput
+                    type={inputTypes.CHECK}
+                    name={language.id.toString()}
+                    value={languageIds.includes(language.id)}
+                    onChange={onLanguageChange}
+                  />
+                </FormRow>
+              );
+            })}
+          </Form>
+        ) : null}
+      </ModalBody>
+
+      <ModalFooter>
+        <Button onPress={onModalClose}>{translate('Cancel')}</Button>
+
+        <Button kind={kinds.SUCCESS} onPress={onLanguagesSelectWrapper}>
+          {translate('SelectLanguages')}
+        </Button>
+      </ModalFooter>
+    </ModalContent>
+  );
+}
+
+export default SelectLanguageModalContent;
