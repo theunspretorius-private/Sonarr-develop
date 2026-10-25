@@ -61,11 +61,16 @@
 
     <style>
       html {
+        min-height: 100%;
         background-color: var(--paper);
+        background-image:
+          radial-gradient(900px 520px at 85% -12%, color-mix(in oklab, var(--accentAlt) 22%, transparent), transparent 70%),
+          radial-gradient(760px 460px at 15% -18%, color-mix(in oklab, var(--accent) 14%, transparent), transparent 70%);
+        background-repeat: no-repeat;
       }
 
       body {
-        background-color: var(--paper);
+        background-color: transparent;
         color: var(--textColor);
         font-family: 'Inter', ui-sans-serif, system-ui, 'Helvetica Neue',
           'Helvetica', 'Arial', sans-serif;
@@ -90,8 +95,9 @@
       .panel {
         margin-top: 50px;
         border: 1px solid var(--hairline);
-        border-radius: 12px;
+        border-radius: 20px;
         background-color: var(--paperCard);
+        box-shadow: 0 32px 80px -24px oklch(0% 0 none / 0.7);
       }
 
       .panel-header {
@@ -124,7 +130,7 @@
         width: 100%;
         height: 38px;
         border: 1px solid var(--inputBorderColor);
-        border-radius: 8px;
+        border-radius: 10px;
         background-color: var(--inputBackgroundColor);
         color: var(--ink);
         font-size: 14px;
@@ -151,14 +157,16 @@
         padding: 11px 20px;
         width: 100%;
         border: 1px solid var(--primaryBorderColor);
-        border-radius: 8px;
+        border-radius: 999px;
         background-color: var(--primaryBackgroundColor);
+        background-image: var(--primaryBackgroundImage);
+        box-shadow: 0 8px 22px -10px color-mix(in oklab, var(--accentAlt) 70%, transparent);
         color: var(--primaryButtonColor);
         vertical-align: middle;
         text-align: center;
         text-decoration: none;
         white-space: nowrap;
-        font-weight: 500;
+        font-weight: 600;
         font-size: 14px;
         font-family: inherit;
         line-height: 1.2;
@@ -168,6 +176,7 @@
       .button:hover {
         border-color: var(--primaryHoverBorderColor);
         background-color: var(--primaryHoverBackgroundColor);
+        filter: brightness(1.1);
         color: var(--primaryButtonColor);
         text-decoration: none;
       }
@@ -175,6 +184,8 @@
       .button-default {
         border-color: var(--defaultBorderColor);
         background-color: var(--defaultBackgroundColor);
+        background-image: none;
+        box-shadow: none;
         color: var(--defaultColor);
       }
 

@@ -18,7 +18,7 @@
   z-index: 2;
   margin-top: -24px;
   padding-top: 24px;
-  background: color-mix(in oklab, var(--pageBackground) 70%, transparent);
+  background: color-mix(in oklab, var(--pageBackground) 45%, transparent);
   backdrop-filter: blur(14px);
 }
 

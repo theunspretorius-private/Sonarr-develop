@@ -17,6 +17,7 @@ import ChartContainer from './ChartContainer';
 import createSlicePattern from './createSlicePattern';
 
 Chart.register(ArcElement, Tooltip, Legend);
+Chart.defaults.font.family = 'Inter, ui-sans-serif, system-ui, sans-serif';
 
 export interface DoughnutChartItem {
   label: string;
