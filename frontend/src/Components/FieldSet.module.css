@@ -12,7 +12,7 @@
   padding: 20px 28px;
   min-width: 0;
   border: 1px solid var(--borderColor);
-  border-radius: 12px;
+  border-radius: var(--radiusLarge);
   background-color: var(--paperCard);
   gap: 16px;
 }

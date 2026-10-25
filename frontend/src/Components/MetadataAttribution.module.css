@@ -8,11 +8,11 @@
   display: flex;
   justify-content: flex-end;
   margin-top: auto;
-  color: var(--mediumGray);
-  font-size: var(--defaultFontSize);
+  color: var(--inkFaint);
+  font-size: var(--extraSmallFontSize);
 
   &:hover {
-    color: var(--darkGray);
+    color: var(--inkMuted);
     text-decoration: none;
   }
 }

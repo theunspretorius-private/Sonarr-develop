@@ -185,7 +185,6 @@
   overflow: hidden;
   max-width: 110ch;
   color: var(--inkSoft);
-  font-style: italic;
   font-size: 13.5px;
   font-family: var(--defaultFontFamily);
   line-height: 1.6;

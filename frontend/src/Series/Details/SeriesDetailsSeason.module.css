@@ -231,9 +231,8 @@
   padding: 24px;
   color: var(--inkMuted);
   text-align: center;
-  font-style: italic;
   font-size: 14px;
-  font-family: var(--editorialFontFamily);
+  font-family: var(--defaultFontFamily);
 }
 
 @media (--breakpointMedium) {

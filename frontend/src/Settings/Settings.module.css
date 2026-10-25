@@ -30,22 +30,22 @@
   flex-direction: column;
   padding: 24px;
   border: 1px solid var(--borderColor);
-  border-radius: 12px;
+  border-radius: var(--radiusLarge);
   background-color: var(--paperCard);
   color: var(--ink);
   text-decoration: none;
   transition:
     background-color 200ms cubic-bezier(0.25, 1, 0.5, 1),
     border-color 200ms cubic-bezier(0.25, 1, 0.5, 1),
-    box-shadow 200ms cubic-bezier(0.25, 1, 0.5, 1);
+    box-shadow 200ms cubic-bezier(0.25, 1, 0.5, 1),
+    transform 200ms cubic-bezier(0.25, 1, 0.5, 1);
   gap: 8px;
 
   &:hover {
-    border-color: var(--accent);
-    box-shadow:
-      0 6px 20px -8px rgba(0, 0, 0, 0.18),
-      0 2px 4px -2px rgba(0, 0, 0, 0.08);
+    border-color: color-mix(in oklab, var(--accent) 55%, var(--hairline));
+    box-shadow: var(--shadowGlow);
     text-decoration: none;
+    transform: translateY(-2px);
   }
 }
 
@@ -77,9 +77,9 @@
   margin: 0;
   color: var(--ink);
   letter-spacing: -0.01em;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 16px;
-  font-family: var(--defaultFontFamily);
+  font-family: var(--displayFontFamily);
   line-height: 1.25;
 }
 

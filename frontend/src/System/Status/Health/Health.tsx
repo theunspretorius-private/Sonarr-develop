@@ -33,6 +33,7 @@ const columns: Column[] = [
     isVisible: true,
   },
   {
+    className: styles.actionsHeader,
     name: 'actions',
     label: () => translate('Actions'),
     isVisible: true,
@@ -110,7 +111,7 @@ function Health() {
 
                     <TableRowCell>{item.message}</TableRowCell>
 
-                    <TableRowCell>
+                    <TableRowCell className={styles.actions}>
                       <IconButton
                         name={icons.WIKI}
                         to={item.wikiUrl}

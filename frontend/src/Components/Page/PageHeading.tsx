@@ -37,10 +37,8 @@ function PageHeading({
     <div className={styles.heading}>
       <div className={styles.row}>
         <div className={styles.titleBlock}>
-          <h1 className={styles.title}>
-            {scope ? <span className={styles.scope}>{scope} ·</span> : null}{' '}
-            {title}
-          </h1>
+          {scope ? <span className={styles.scope}>{scope}</span> : null}
+          <h1 className={styles.title}>{title}</h1>
           {subtitle ? <p className={styles.subtitle}>{subtitle}</p> : null}
         </div>
         <div className={styles.right}>

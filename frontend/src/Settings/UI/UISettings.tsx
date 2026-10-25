@@ -17,7 +17,6 @@ import settingsStyles from 'Settings/Settings.module.css';
 import SettingsPage from 'Settings/SettingsPage';
 import { InputChanged } from 'typings/inputs';
 import timeZoneOptions from 'Utilities/Date/timeZoneOptions';
-import titleCase from 'Utilities/String/titleCase';
 import translate from 'Utilities/String/translate';
 import { useManageUiSettings } from './useUiSettings';
 
@@ -123,12 +122,6 @@ function UISettings() {
       };
     });
   }, [languageItems]);
-
-  // Must stay in sync with the theme selectors in frontend/src/Styles/Themes/themes.css.
-  const themeOptions = ['auto', 'light', 'dark'].map((theme) => ({
-    key: theme,
-    value: titleCase(theme),
-  }));
 
   const handleInputChange = useCallback(
     (change: InputChanged) => {
@@ -268,18 +261,6 @@ function UISettings() {
                 legend={translate('Style')}
                 caption={translate('StyleCaption')}
               >
-                <FormRow>
-                  <FormLabel>{translate('Theme')}</FormLabel>
-                  <FormInputHelpText text={translate('ThemeHelpText')} />
-                  <FormInput
-                    type={inputTypes.SELECT}
-                    name="theme"
-                    values={themeOptions}
-                    onChange={handleInputChange}
-                    {...settings.theme}
-                  />
-                </FormRow>
-
                 <FormRow>
                   <FormLabel>{translate('HeaderColor')}</FormLabel>
                   <FormInputHelpText text={translate('HeaderColorHelpText')} />

@@ -85,10 +85,10 @@
   max-height: calc(2 * 1.2em);
   color: var(--white);
   text-wrap: balance;
-  letter-spacing: -0.025em;
-  font-weight: 600;
-  font-size: clamp(2.25rem, 5cqi, 3.25rem);
-  font-family: var(--defaultFontFamily);
+  letter-spacing: -0.035em;
+  font-weight: 800;
+  font-size: clamp(2.25rem, 5cqi, 3.5rem);
+  font-family: var(--displayFontFamily);
   line-height: 1.2;
 }
 
@@ -269,53 +269,27 @@
 
 .overviewFrame {
   position: relative;
-  margin-bottom: 14px;
-  padding-top: 14px;
-}
-
-.overviewFrame::before {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 36px;
-  height: 1px;
-  background-color: var(--accent);
-  content: "";
-}
-
-.overviewFrame::after {
-  position: absolute;
-  top: 0;
-  right: 0;
-  left: 36px;
-  height: 1px;
-  background-color: var(--borderColor);
-  content: "";
+  margin-bottom: 8px;
 }
 
 .overviewLabel {
-  position: absolute;
-  top: -9px;
-  left: 0;
-  z-index: 1;
-  padding-right: 8px;
-  background-color: var(--pageBackground);
-  color: var(--accentDeep);
+  display: block;
+  color: var(--inkMuted);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   font-weight: 600;
-  font-size: 12px;
-  font-family: var(--monoSpaceFontFamily);
+  font-size: 11px;
+  font-family: var(--defaultFontFamily);
 }
 
 .overview {
   margin: 0;
+  max-width: 80ch;
   color: var(--inkSoft);
   text-wrap: pretty;
-  font-style: italic;
-  font-size: 16px;
+  font-size: 15px;
   font-family: var(--defaultFontFamily);
-  line-height: 1.6;
+  line-height: 1.65;
 }
 
 .overviewToggle {

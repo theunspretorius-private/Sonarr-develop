@@ -287,6 +287,8 @@ function PageSidebar() {
 
     return {
       transform: `translateX(${isSidebarVisible ? 0 : SIDEBAR_WIDTH * -1}px)`,
+      // The drop shadow would otherwise bleed in from the off-screen edge
+      boxShadow: isSidebarVisible ? undefined : 'none',
     };
   }, [isSmallScreen, isSidebarVisible]);
 

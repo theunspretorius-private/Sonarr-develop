@@ -132,10 +132,13 @@ export default function SeriesIndexPosters({
       posterHeight,
       (detailedProgressBar ? detailedProgressBarHeight : progressBarHeight) +
         gap,
-      lineHeight,
       // Top + bottom cell padding, plus 8px of slack.
       cellPadding * 2 + 8,
     ];
+
+    if (items.some((s) => s.nextAiring)) {
+      heights.push(lineHeight);
+    }
 
     if (showTitle) {
       heights.push(6 + 20 + gap);

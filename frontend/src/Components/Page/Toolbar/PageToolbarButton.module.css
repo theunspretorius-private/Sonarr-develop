@@ -4,8 +4,8 @@
   display: inline-flex;
   align-items: center;
   padding: 0 14px;
-  height: var(--chipSize);
-  border-radius: 999px;
+  height: 34px;
+  border-radius: var(--radiusPill);
   color: var(--toolbarColor);
   white-space: nowrap;
   transition:
@@ -15,8 +15,7 @@
   gap: 7px;
 
   &:hover {
-    background-color: var(--paperCard);
-    box-shadow: var(--shadowChip);
+    background-color: var(--paperWarm);
     color: var(--ink);
     text-decoration: none;
   }

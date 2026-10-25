@@ -4,7 +4,7 @@
   padding: 6px 6px 8px;
   border-bottom: 1px solid var(--calendarBorderColor);
   border-left: 1px solid var(--calendarBorderColor);
-  background-color: var(--pageBackground);
+  background-color: transparent;
   vertical-align: top;
 }
 

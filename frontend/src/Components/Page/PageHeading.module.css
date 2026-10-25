@@ -1,10 +1,10 @@
 .heading {
-  margin-bottom: 24px;
+  margin-bottom: 28px;
 }
 
 .row {
   display: flex;
-  align-items: baseline;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 24px;
 
@@ -20,23 +20,25 @@
 .title {
   margin: 0;
   color: var(--ink);
-  font-weight: 500;
-  font-size: 13px;
-  font-family: var(--defaultFontFamily);
-  line-height: 1.4;
+  letter-spacing: -0.03em;
+  font-weight: 800;
+  font-size: 30px;
+  font-family: var(--displayFontFamily);
+  line-height: 1.15;
 }
 
 .scope {
   color: var(--inkMuted);
-  font-weight: 400;
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .subtitle {
   margin: 0;
   color: var(--inkMuted);
-  font-style: italic;
-  font-size: 15px;
-  font-family: var(--editorialFontFamily);
+  font-size: 14px;
+  font-family: var(--defaultFontFamily);
   line-height: 1.5;
 }
 
@@ -45,9 +47,10 @@
   align-items: center;
   color: var(--inkMuted);
   white-space: nowrap;
-  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+
   font-size: 13px;
-  font-family: var(--monoSpaceFontFamily);
+  font-family: var(--defaultFontFamily);
   gap: 6px;
 }
 

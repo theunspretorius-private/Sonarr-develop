@@ -1,9 +1,9 @@
 .wrapper {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   flex-grow: 1;
-  padding: 0 12px;
+  padding: 0 var(--pageContentBodyPadding);
 }
 
 .loading {
@@ -28,7 +28,7 @@
 .searchIcon {
   position: absolute;
   top: 50%;
-  left: 12px;
+  left: 14px;
   z-index: 1;
   color: var(--inkMuted);
   transform: translateY(-50%);
@@ -37,12 +37,13 @@
 
 .input {
   margin: 0;
-  padding: 7px 14px 7px 36px;
-  width: 300px;
+  padding: 8px 16px 8px 40px;
+  max-width: 100%;
+  width: 380px;
   border: 1px solid var(--pageHeaderSearchBorderColor);
-  border-radius: 8px;
+  border-radius: var(--radiusPill);
   background-color: var(--pageHeaderSearchBackgroundColor);
-  box-shadow: none;
+  box-shadow: 0 1px 2px var(--inputBoxShadowColor);
   color: var(--ink);
   font-size: 13px;
   font-family: var(--defaultFontFamily);
@@ -56,6 +57,7 @@
   }
 
   &:hover {
+    border-color: var(--defaultHoverBorderColor);
     background-color: var(--pageHeaderSearchHoverBackgroundColor);
   }
 
@@ -63,7 +65,7 @@
     outline: 0;
     border-color: var(--pageHeaderSearchFocusBorderColor);
     background-color: var(--pageHeaderSearchFocusBackgroundColor);
-    box-shadow: none;
+    box-shadow: 0 0 0 3px var(--inputFocusBoxShadowColor);
 
     &::placeholder {
       color: var(--pageHeaderSearchFocusPlaceholderColor);
@@ -146,6 +148,10 @@
 }
 
 @media (--breakpointSmall) {
+  .wrapper {
+    padding: 0 8px;
+  }
+
   .input {
     min-width: 0;
     max-width: none;

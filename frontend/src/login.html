@@ -5,18 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!-- Chrome, Opera, and Firefox OS -->
-    <meta
-      name="theme-color"
-      content="#e8ebf1"
-      media="(prefers-color-scheme: light)"
-    />
-    <meta
-      name="theme-color"
-      content="#1b1f26"
-      media="(prefers-color-scheme: dark)"
-    />
+    <meta name="theme-color" content="#06070e" />
     <!-- Windows Phone -->
-    <meta name="msapplication-navbutton-color" content="#1b1f26" />
+    <meta name="msapplication-navbutton-color" content="#06070e" />
     <!-- Android/Apple Phone -->
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -67,16 +58,6 @@
     <link rel="stylesheet" type="text/css" href="/Content/Fonts/fonts.css" />
 
     <title>Login - Sonarr</title>
-
-    <script type="text/javascript">
-      var theme = '_THEME_';
-      var defaultDark = window.matchMedia(
-        '(prefers-color-scheme: dark)'
-      ).matches;
-
-      document.documentElement.dataset.theme =
-        theme === 'dark' || (theme === 'auto' && defaultDark) ? 'dark' : 'light';
-    </script>
 
     <style>
       html {

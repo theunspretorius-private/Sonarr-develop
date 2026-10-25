@@ -70,10 +70,10 @@
 .titleMobile {
   color: var(--ink);
   text-align: center;
-  letter-spacing: -0.018em;
-  font-weight: 600;
-  font-size: 22px;
-  font-family: var(--defaultFontFamily);
+  letter-spacing: -0.03em;
+  font-weight: 800;
+  font-size: 24px;
+  font-family: var(--displayFontFamily);
   line-height: 1.15;
 }
 
@@ -95,9 +95,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 12px;
+  padding: 6px 14px;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--radiusPill);
   color: var(--inkSoft);
   text-transform: uppercase;
   letter-spacing: 0.06em;

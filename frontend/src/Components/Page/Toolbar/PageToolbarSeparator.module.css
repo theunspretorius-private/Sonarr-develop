@@ -1,6 +1,6 @@
 .separator {
+  margin: 0 4px;
   width: 1px;
-  height: 28px;
+  height: 20px;
   background-color: var(--hairline);
-  opacity: 0.8;
 }
