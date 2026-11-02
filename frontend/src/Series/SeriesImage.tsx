@@ -5,9 +5,15 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import LazyLoad from 'react-lazyload';
+import ReactLazyLoad from 'react-lazyload';
 import translate from 'Utilities/String/translate';
 import { CoverType, Image } from './Series';
+
+// react-lazyload is CommonJS flagged with __esModule. Under Vite 8's CJS interop
+// the default import is the whole module.exports, with the component on .default.
+const LazyLoad =
+  (ReactLazyLoad as unknown as { default?: typeof ReactLazyLoad }).default ??
+  ReactLazyLoad;
 
 function findImage(images: Image[], coverType: CoverType) {
   return images.find((image) => image.coverType === coverType);
