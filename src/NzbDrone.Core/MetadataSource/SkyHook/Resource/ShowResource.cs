@@ -2,15 +2,13 @@ using System.Collections.Generic;
 
 namespace NzbDrone.Core.MetadataSource.SkyHook.Resource
 {
-    public class ShowResource
+    public class ShowLookupResource
     {
-        public ShowResource()
+        public ShowLookupResource()
         {
-            Actors = new List<ActorResource>();
             Genres = new List<string>();
             Images = new List<ImageResource>();
             Seasons = new List<SeasonResource>();
-            Episodes = new List<EpisodeResource>();
             Translations = new List<TranslationResource>();
             SeasonTypes = new List<SeasonTypeResource>();
         }
@@ -37,7 +35,6 @@ namespace NzbDrone.Core.MetadataSource.SkyHook.Resource
         public string OriginalLanguage { get; set; }
         public string OriginalCountry { get; set; }
 
-        public List<ActorResource> Actors { get; set; }
         public List<string> Genres { get; set; }
 
         public string ContentRating { get; set; }
@@ -46,8 +43,19 @@ namespace NzbDrone.Core.MetadataSource.SkyHook.Resource
 
         public List<ImageResource> Images { get; set; }
         public List<SeasonResource> Seasons { get; set; }
-        public List<EpisodeResource> Episodes { get; set; }
         public List<TranslationResource> Translations { get; set; }
         public List<SeasonTypeResource> SeasonTypes { get; set; }
+    }
+
+    public class ShowResource : ShowLookupResource
+    {
+        public ShowResource()
+        {
+            Actors = new List<ActorResource>();
+            Episodes = new List<EpisodeResource>();
+        }
+
+        public List<ActorResource> Actors { get; set; }
+        public List<EpisodeResource> Episodes { get; set; }
     }
 }

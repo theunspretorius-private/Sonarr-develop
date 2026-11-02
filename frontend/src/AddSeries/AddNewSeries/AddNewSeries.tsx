@@ -124,7 +124,11 @@ function AddNewSeries() {
             </div>
 
             {data.map((item) => (
-              <AddNewSeriesSearchResult key={item.tvdbId} series={item} />
+              <AddNewSeriesSearchResult
+                key={item.tvdbId}
+                series={item}
+                language={language}
+              />
             ))}
           </div>
         ) : null}
@@ -148,7 +152,9 @@ function AddNewSeries() {
           </div>
         ) : null}
 
-        {term ? null : <AddNewSeriesRecommendations language={language} />}
+        <div className={term ? styles.hidden : undefined}>
+          <AddNewSeriesRecommendations language={language} />
+        </div>
 
         <MetadataSettingsModal
           isOpen={isMetadataSettingsModalOpen}

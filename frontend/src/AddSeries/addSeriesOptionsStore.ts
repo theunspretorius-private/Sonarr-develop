@@ -15,7 +15,7 @@ export interface AddSeriesOptions {
   tags: number[];
 }
 
-const { useOptions, useOption, setOption } =
+const { useOptions, useOption, getOptions, setOption } =
   createOptionsStore<AddSeriesOptions>('add_series_options', () => {
     return {
       rootFolderPath: '',
@@ -32,6 +32,7 @@ const { useOptions, useOption, setOption } =
 
 export const useAddSeriesOptions = useOptions;
 export const useAddSeriesOption = useOption;
+export const getAddSeriesOptions = getOptions;
 export const setAddSeriesOption = setOption;
 
 export const useAddSeriesLanguage = () => {

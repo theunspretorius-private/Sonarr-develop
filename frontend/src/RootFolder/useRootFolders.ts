@@ -29,6 +29,10 @@ const DEFAULT_ROOT_FOLDERS: RootFolder[] = [];
 const useRootFolders = () => {
   const result = useApiQuery<RootFolder[]>({
     path: '/rootFolder',
+    queryOptions: {
+      staleTime: 60 * 1000,
+      refetchOnWindowFocus: false,
+    },
   });
 
   return {

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
 using NLog;
 using NzbDrone.Common.Cloud;
 using NzbDrone.Common.Disk;
@@ -69,6 +71,33 @@ namespace NzbDrone.Core.MetadataSource.SkyHook
             var series = MapSeries(httpResponse.Resource);
 
             return new Tuple<Series, List<Episode>>(series, episodes.ToList());
+        }
+
+        public async Task<Series> LookupSeriesByTvdbIdAsync(int tvdbSeriesId, Language language, CancellationToken cancellationToken = default)
+        {
+            var isoLanguage = IsoLanguages.Get(language) ?? IsoLanguages.Get(Language.English);
+
+            var httpRequest = _requestBuilder.Create()
+                                             .SetSegment("route", "shows")
+                                             .Resource($"{isoLanguage.ThreeLetterCode}/{tvdbSeriesId}/{SeasonType.Official}")
+                                             .Build();
+
+            httpRequest.AllowAutoRedirect = true;
+            httpRequest.SuppressHttpError = true;
+
+            var httpResponse = await _httpClient.GetAsync<ShowLookupResource>(httpRequest, cancellationToken);
+
+            if (httpResponse.HasHttpError)
+            {
+                if (httpResponse.StatusCode == HttpStatusCode.NotFound)
+                {
+                    throw new SeriesNotFoundException(tvdbSeriesId);
+                }
+
+                throw new HttpException(httpRequest, httpResponse);
+            }
+
+            return MapLookupSeries(httpResponse.Resource);
         }
 
         public List<Series> SearchForNewSeriesByImdbId(string imdbId, Language language)
@@ -150,7 +179,7 @@ namespace NzbDrone.Core.MetadataSource.SkyHook
                                                  .AddQueryParam("term", title.ToLower().Trim())
                                                  .Build();
 
-                var httpResponse = _httpClient.Get<List<ShowResource>>(httpRequest);
+                var httpResponse = _httpClient.Get<List<ShowLookupResource>>(httpRequest);
 
                 return httpResponse.Resource.SelectList(MapSearchResult);
             }
@@ -171,19 +200,27 @@ namespace NzbDrone.Core.MetadataSource.SkyHook
             }
         }
 
-        private Series MapSearchResult(ShowResource show)
+        private Series MapSearchResult(ShowLookupResource show)
         {
             var series = _seriesService.FindByTvdbId(show.TvdbId);
 
             if (series == null)
             {
-                series = MapSeries(show);
+                series = MapLookupSeries(show);
             }
 
             return series;
         }
 
         private Series MapSeries(ShowResource show)
+        {
+            var series = MapLookupSeries(show);
+            series.Actors = show.Actors.Select(MapActors).ToList();
+
+            return series;
+        }
+
+        private Series MapLookupSeries(ShowLookupResource show)
         {
             var series = new Series();
             series.TvdbId = show.TvdbId;
@@ -265,7 +302,6 @@ namespace NzbDrone.Core.MetadataSource.SkyHook
                 series.SeriesType = SeriesTypes.Daily;
             }
 
-            series.Actors = show.Actors.Select(MapActors).ToList();
             series.Seasons = show.Seasons.Select(MapSeason).DistinctBy(s => s.SeasonNumber).ToList();
             series.Images = show.Images.Select(MapImage).ToList();
             series.Monitored = true;

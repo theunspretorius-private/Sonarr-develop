@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using NzbDrone.Core.Languages;
 using NzbDrone.Core.Tv;
 
@@ -16,6 +18,6 @@ namespace NzbDrone.Core.MetadataSource
     public interface IProvideRecommendedSeries
     {
         List<Series> GetRecommendedSeries(RecommendationListType listType, Language language);
+        Task<List<Series>> GetRecommendedSeriesAsync(RecommendationListType listType, Language language, CancellationToken cancellationToken = default);
     }
 }
-

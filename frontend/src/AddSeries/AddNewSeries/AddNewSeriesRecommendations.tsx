@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AddSeriesOptions,
   setAddSeriesOption,
@@ -15,7 +15,9 @@ import Button from 'Components/Link/Button';
 import LoadingIndicator from 'Components/Loading/LoadingIndicator';
 import { icons, kinds, sizes } from 'Helpers/Props';
 import Language from 'Language/Language';
+import useRootFolders from 'RootFolder/useRootFolders';
 import useSeries, { useHasSeries } from 'Series/useSeries';
+import { useQualityProfilesData } from 'Settings/Profiles/Quality/useQualityProfiles';
 import { InputChanged } from 'typings/inputs';
 import getErrorMessage from 'Utilities/Object/getErrorMessage';
 import translate from 'Utilities/String/translate';
@@ -68,6 +70,18 @@ function RecommendationTabButton({
   );
 }
 
+function DefaultRootFolderInitializer() {
+  const { data: rootFolders } = useRootFolders();
+
+  useEffect(() => {
+    if (rootFolders.length > 0 && rootFolders[0].path) {
+      setAddSeriesOption('rootFolderPath', rootFolders[0].path);
+    }
+  }, [rootFolders]);
+
+  return null;
+}
+
 interface AddNewSeriesRecommendationsProps {
   language: Language;
 }
@@ -77,8 +91,10 @@ function AddNewSeriesRecommendations({
 }: AddNewSeriesRecommendationsProps) {
   const hasSeries = useHasSeries();
   const { data: existingSeriesList = [] } = useSeries();
+  const qualityProfiles = useQualityProfilesData();
   const [listType, setListType] = useState<RecommendationListType>('trending');
   const [showExistingSeries, setShowExistingSeries] = useState(false);
+  const [isDefaultsOpen, setIsDefaultsOpen] = useState(false);
 
   const {
     rootFolderPath,
@@ -87,6 +103,12 @@ function AddNewSeriesRecommendations({
     seriesType,
     searchForMissingEpisodes,
   } = useAddSeriesOptions();
+
+  useEffect(() => {
+    if (!qualityProfileId && qualityProfiles.length > 0) {
+      setAddSeriesOption('qualityProfileId', qualityProfiles[0].id);
+    }
+  }, [qualityProfileId, qualityProfiles]);
 
   const { isFetching, error, data } = useRecommendedSeries(listType, language);
 
@@ -120,6 +142,10 @@ function AddNewSeriesRecommendations({
     setShowExistingSeries((prev) => !prev);
   }, []);
 
+  const handleToggleDefaults = useCallback(() => {
+    setIsDefaultsOpen((prev) => !prev);
+  }, []);
+
   let showExistingButtonText = translate('ShowInLibrarySeries');
 
   if (showExistingSeries) {
@@ -132,6 +158,10 @@ function AddNewSeriesRecommendations({
 
   return (
     <div className={styles.container}>
+      {!rootFolderPath && !isDefaultsOpen ? (
+        <DefaultRootFolderInitializer />
+      ) : null}
+
       {hasSeries ? null : (
         <div className={styles.importCallout}>
           <span className={styles.importCalloutText}>
@@ -142,65 +172,6 @@ function AddNewSeriesRecommendations({
           </Button>
         </div>
       )}
-
-      <div className={styles.defaultsBar}>
-        <div className={styles.defaultsHeader}>
-          <div className={styles.defaultsTitle}>
-            {translate('QuickAddDefaults')}
-          </div>
-
-          <div className={styles.searchCheckContainer}>
-            <CheckInput
-              name="searchForMissingEpisodes"
-              value={searchForMissingEpisodes}
-              helpText={translate('SearchForMissingEpisodesOnAdd')}
-              onChange={handleOptionChange}
-            />
-          </div>
-        </div>
-
-        <div className={styles.defaultsGrid}>
-          <div className={styles.setting}>
-            <div className={styles.settingLabel}>{translate('RootFolder')}</div>
-            <RootFolderSelectInput
-              name="rootFolderPath"
-              value={rootFolderPath}
-              includeMissingValue={false}
-              onChange={handleOptionChange}
-            />
-          </div>
-
-          <div className={styles.setting}>
-            <div className={styles.settingLabel}>
-              {translate('QualityProfile')}
-            </div>
-            <QualityProfileSelectInput
-              name="qualityProfileId"
-              value={qualityProfileId}
-              onChange={handleOptionChange}
-            />
-          </div>
-
-          <div className={styles.setting}>
-            <div className={styles.settingLabel}>{translate('Monitor')}</div>
-            <MonitorEpisodesSelectInput
-              name="monitor"
-              value={monitor}
-              onChange={handleOptionChange}
-            />
-          </div>
-
-          <div className={styles.setting}>
-            <div className={styles.settingLabel}>{translate('SeriesType')}</div>
-            <SeriesTypeSelectInput
-              name="seriesType"
-              value={seriesType}
-              selectedValueOptions={HIDE_HINT}
-              onChange={handleOptionChange}
-            />
-          </div>
-        </div>
-      </div>
 
       <div className={styles.headerRow}>
         <div className={styles.titleGroup}>
@@ -229,12 +200,86 @@ function AddNewSeriesRecommendations({
           <Button
             kind={kinds.DEFAULT}
             size={sizes.SMALL}
+            onPress={handleToggleDefaults}
+          >
+            <Icon name={icons.SETTINGS} size={14} />{' '}
+            {translate('QuickAddDefaults')}
+          </Button>
+
+          <Button
+            kind={kinds.DEFAULT}
+            size={sizes.SMALL}
             onPress={handleToggleShowExisting}
           >
             <Icon name={icons.VIEW} size={14} /> {showExistingButtonText}
           </Button>
         </div>
       </div>
+
+      {isDefaultsOpen ? (
+        <div className={styles.defaultsBar}>
+          <div className={styles.defaultsHeader}>
+            <div className={styles.defaultsTitle}>
+              {translate('QuickAddDefaults')}
+            </div>
+
+            <div className={styles.searchCheckContainer}>
+              <CheckInput
+                name="searchForMissingEpisodes"
+                value={searchForMissingEpisodes}
+                helpText={translate('SearchForMissingEpisodesOnAdd')}
+                onChange={handleOptionChange}
+              />
+            </div>
+          </div>
+
+          <div className={styles.defaultsGrid}>
+            <div className={styles.setting}>
+              <div className={styles.settingLabel}>
+                {translate('RootFolder')}
+              </div>
+              <RootFolderSelectInput
+                name="rootFolderPath"
+                value={rootFolderPath}
+                includeMissingValue={false}
+                onChange={handleOptionChange}
+              />
+            </div>
+
+            <div className={styles.setting}>
+              <div className={styles.settingLabel}>
+                {translate('QualityProfile')}
+              </div>
+              <QualityProfileSelectInput
+                name="qualityProfileId"
+                value={qualityProfileId}
+                onChange={handleOptionChange}
+              />
+            </div>
+
+            <div className={styles.setting}>
+              <div className={styles.settingLabel}>{translate('Monitor')}</div>
+              <MonitorEpisodesSelectInput
+                name="monitor"
+                value={monitor}
+                onChange={handleOptionChange}
+              />
+            </div>
+
+            <div className={styles.setting}>
+              <div className={styles.settingLabel}>
+                {translate('SeriesType')}
+              </div>
+              <SeriesTypeSelectInput
+                name="seriesType"
+                value={seriesType}
+                selectedValueOptions={HIDE_HINT}
+                onChange={handleOptionChange}
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {isFetching ? <LoadingIndicator /> : null}
 
@@ -256,7 +301,12 @@ function AddNewSeriesRecommendations({
           </div>
 
           {visibleSeries.map((item) => (
-            <AddNewSeriesSearchResult key={item.tvdbId} series={item} />
+            <AddNewSeriesSearchResult
+              key={item.tvdbId}
+              series={item}
+              isExistingSeries={existingTvdbIds.has(item.tvdbId)}
+              language={language}
+            />
           ))}
         </div>
       ) : null}

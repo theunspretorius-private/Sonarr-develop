@@ -58,7 +58,10 @@ public class SeriesLookupController : Controller
 
     [HttpGet("recommended")]
     [Produces("application/json")]
-    public Ok<IEnumerable<SeriesResource>> GetRecommended([FromQuery] RecommendationListType listType = RecommendationListType.Trending, [FromQuery] int? language = null)
+    public async Task<Ok<IEnumerable<SeriesResource>>> GetRecommended(
+        [FromQuery] RecommendationListType listType = RecommendationListType.Trending,
+        [FromQuery] int? language = null,
+        CancellationToken cancellationToken = default)
     {
         var languageId = language ?? _configService.PreferredMetadataLanguage;
         var searchLanguage = Language.All.FirstOrDefault(l => l.Id == languageId);
@@ -68,12 +71,14 @@ public class SeriesLookupController : Controller
             throw new BadRequestException($"Invalid language: {languageId}");
         }
 
-        var results = _recommendedSeriesProxy.GetRecommendedSeries(listType, searchLanguage);
+        var results = await _recommendedSeriesProxy.GetRecommendedSeriesAsync(listType, searchLanguage, cancellationToken);
         return TypedResults.Ok(MapToResource(results));
     }
 
     private IEnumerable<SeriesResource> MapToResource(IEnumerable<NzbDrone.Core.Tv.Series> series)
     {
+        var excludedTvdbIds = _importListExclusionService.All().Select(e => e.TvdbId).ToHashSet();
+
         foreach (var currentSeries in series)
         {
             var resource = currentSeries.ToResource();
@@ -90,14 +95,33 @@ public class SeriesLookupController : Controller
             resource.Folder = _fileNameBuilder.GetSeriesFolder(currentSeries);
             resource.Folders = [];
             resource.Statistics = new SeriesStatistics().ToResource(resource.Seasons);
-            resource.IsExcluded = _importListExclusionService.FindByTvdbId(currentSeries.TvdbId) is not null;
+            resource.IsExcluded = excludedTvdbIds.Contains(currentSeries.TvdbId);
+
+            var folderByTitle = new Dictionary<string, string>(StringComparer.Ordinal);
+
+            if (!string.IsNullOrEmpty(currentSeries.Title))
+            {
+                folderByTitle[currentSeries.Title] = resource.Folder;
+            }
 
             foreach (var translation in currentSeries.Translations)
             {
+                string folder;
+
+                if (string.IsNullOrWhiteSpace(translation.Title))
+                {
+                    folder = resource.Folder;
+                }
+                else if (!folderByTitle.TryGetValue(translation.Title, out folder!))
+                {
+                    folder = _fileNameBuilder.GetSeriesFolder(currentSeries, translation.Title);
+                    folderByTitle[translation.Title] = folder;
+                }
+
                 resource.Folders.Add(new SeriesFolderResource
                 {
                     Language = translation.Language,
-                    Folder = _fileNameBuilder.GetSeriesFolder(currentSeries, translation.Title)
+                    Folder = folder
                 });
             }
 

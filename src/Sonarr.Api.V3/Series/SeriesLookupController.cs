@@ -1,5 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using NzbDrone.Core.Languages;
 using NzbDrone.Core.MediaCover;
@@ -48,7 +51,10 @@ namespace Sonarr.Api.V3.Series
         }
 
         [HttpGet("recommended")]
-        public IEnumerable<SeriesResource> GetRecommended([FromQuery] RecommendationListType listType = RecommendationListType.Trending, [FromQuery] int? language = null)
+        public async Task<IEnumerable<SeriesResource>> GetRecommended(
+            [FromQuery] RecommendationListType listType = RecommendationListType.Trending,
+            [FromQuery] int? language = null,
+            CancellationToken cancellationToken = default)
         {
             var languageId = language ?? Language.English.Id;
             var searchLanguage = Language.All.FirstOrDefault(l => l.Id == languageId);
@@ -58,7 +64,7 @@ namespace Sonarr.Api.V3.Series
                 throw new BadRequestException($"Invalid language: {languageId}");
             }
 
-            var results = _recommendedSeriesProxy.GetRecommendedSeries(listType, searchLanguage);
+            var results = await _recommendedSeriesProxy.GetRecommendedSeriesAsync(listType, searchLanguage, cancellationToken);
             return MapToResource(results);
         }
 
@@ -82,12 +88,31 @@ namespace Sonarr.Api.V3.Series
                 resource.Statistics = new SeriesStatistics().ToResource(resource.Seasons);
                 resource.Translations = currentSeries.Translations.ToResource();
 
+                var folderByTitle = new Dictionary<string, string>(StringComparer.Ordinal);
+
+                if (!string.IsNullOrEmpty(currentSeries.Title))
+                {
+                    folderByTitle[currentSeries.Title] = resource.Folder;
+                }
+
                 foreach (var translation in currentSeries.Translations)
                 {
+                    string folder;
+
+                    if (string.IsNullOrWhiteSpace(translation.Title))
+                    {
+                        folder = resource.Folder;
+                    }
+                    else if (!folderByTitle.TryGetValue(translation.Title, out folder))
+                    {
+                        folder = _fileNameBuilder.GetSeriesFolder(currentSeries, translation.Title);
+                        folderByTitle[translation.Title] = folder;
+                    }
+
                     resource.Folders.Add(new SeriesFolderResource
                     {
                         Language = translation.Language,
-                        Folder = _fileNameBuilder.GetSeriesFolder(currentSeries, translation.Title)
+                        Folder = folder
                     });
                 }
 

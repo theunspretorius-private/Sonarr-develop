@@ -9,6 +9,7 @@ namespace NzbDrone.Core.Organizer
     public class NamingConfigService : INamingConfigService
     {
         private readonly INamingConfigRepository _repository;
+        private NamingConfig _cachedConfig;
 
         public NamingConfigService(INamingConfigRepository repository)
         {
@@ -17,6 +18,11 @@ namespace NzbDrone.Core.Organizer
 
         public NamingConfig GetConfig()
         {
+            if (_cachedConfig != null)
+            {
+                return _cachedConfig;
+            }
+
             var config = _repository.SingleOrDefault();
 
             if (config == null)
@@ -33,12 +39,14 @@ namespace NzbDrone.Core.Organizer
                 }
             }
 
+            _cachedConfig = config;
             return config;
         }
 
         public void Save(NamingConfig namingConfig)
         {
             _repository.Upsert(namingConfig);
+            _cachedConfig = namingConfig;
         }
     }
 }

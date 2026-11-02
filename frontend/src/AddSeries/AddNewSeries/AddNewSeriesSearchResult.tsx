@@ -1,7 +1,7 @@
 import classNames from 'classnames';
-import React, { useCallback, useState } from 'react';
+import React, { memo, useCallback, useState } from 'react';
 import AddSeries from 'AddSeries/AddSeries';
-import { useAddSeriesOptions } from 'AddSeries/addSeriesOptionsStore';
+import { getAddSeriesOptions } from 'AddSeries/addSeriesOptionsStore';
 import { useAppDimension } from 'App/appStore';
 import HeartRating from 'Components/HeartRating';
 import Icon from 'Components/Icon';
@@ -10,7 +10,7 @@ import Link from 'Components/Link/Link';
 import SpinnerButton from 'Components/Link/SpinnerButton';
 import MetadataAttribution from 'Components/MetadataAttribution';
 import { icons, kinds, sizes } from 'Helpers/Props';
-import { DEFAULT_LANGUAGE } from 'Language/Language';
+import Language, { DEFAULT_LANGUAGE } from 'Language/Language';
 import { useLanguageById } from 'Language/useLanguages';
 import { Statistics } from 'Series/Series';
 import SeriesGenres from 'Series/SeriesGenres';
@@ -39,9 +39,15 @@ function getStatusChip(status: string) {
 
 interface AddNewSeriesSearchResultProps {
   series: AddSeries;
+  isExistingSeries?: boolean;
+  language?: Language;
 }
 
-function AddNewSeriesSearchResult({ series }: AddNewSeriesSearchResultProps) {
+function AddNewSeriesSearchResult({
+  series,
+  isExistingSeries: isExistingSeriesProp,
+  language: languageProp,
+}: AddNewSeriesSearchResultProps) {
   const {
     tvdbId,
     titleSlug,
@@ -63,11 +69,14 @@ function AddNewSeriesSearchResult({ series }: AddNewSeriesSearchResultProps) {
   } = series;
 
   const { preferredMetadataLanguage } = useMetadataSourceSettingsValues();
-  const language = useLanguageById(preferredMetadataLanguage);
-  const isExistingSeries = useExistingSeries(tvdbId);
+  const fallbackLanguage = useLanguageById(preferredMetadataLanguage);
+  const language = languageProp ?? fallbackLanguage;
+  const fallbackIsExistingSeries = useExistingSeries(
+    isExistingSeriesProp === undefined ? tvdbId : undefined
+  );
+  const isExistingSeries = isExistingSeriesProp ?? fallbackIsExistingSeries;
   const isSmallScreen = useAppDimension('isSmallScreen');
   const [isNewAddSeriesModalOpen, setIsNewAddSeriesModalOpen] = useState(false);
-  const options = useAddSeriesOptions();
   const { isAdding, addSeries } = useAddSeries();
 
   const seasonCount = statistics.seasonCount;
@@ -80,6 +89,8 @@ function AddNewSeriesSearchResult({ series }: AddNewSeriesSearchResultProps) {
   }, []);
 
   const handleQuickAddPress = useCallback(() => {
+    const options = getAddSeriesOptions();
+
     if (!options.rootFolderPath || !options.qualityProfileId) {
       setIsNewAddSeriesModalOpen(true);
       return;
@@ -107,7 +118,7 @@ function AddNewSeriesSearchResult({ series }: AddNewSeriesSearchResultProps) {
       seasonFolder: options.seasonFolder,
       tags: options.tags,
     });
-  }, [series, seriesType, seasonTypes, options, language, addSeries]);
+  }, [series, seriesType, seasonTypes, language, addSeries]);
 
   const handleAddSeriesModalClose = useCallback(() => {
     setIsNewAddSeriesModalOpen(false);
@@ -150,7 +161,7 @@ function AddNewSeriesSearchResult({ series }: AddNewSeriesSearchResultProps) {
             images={images}
             size={250}
             overflow={true}
-            lazy={false}
+            lazy={true}
             title={title}
           />
         )}
@@ -266,14 +277,16 @@ function AddNewSeriesSearchResult({ series }: AddNewSeriesSearchResultProps) {
         </div>
       </div>
 
-      <AddNewSeriesModal
-        isOpen={isNewAddSeriesModalOpen && !isExistingSeries}
-        series={series}
-        initialSeriesType={seriesType}
-        onModalClose={handleAddSeriesModalClose}
-      />
+      {isNewAddSeriesModalOpen && !isExistingSeries ? (
+        <AddNewSeriesModal
+          isOpen={true}
+          series={series}
+          initialSeriesType={seriesType}
+          onModalClose={handleAddSeriesModalClose}
+        />
+      ) : null}
     </div>
   );
 }
 
-export default AddNewSeriesSearchResult;
+export default memo(AddNewSeriesSearchResult);
