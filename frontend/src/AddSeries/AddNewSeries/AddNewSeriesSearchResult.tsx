@@ -1,12 +1,16 @@
 import classNames from 'classnames';
 import React, { useCallback, useState } from 'react';
 import AddSeries from 'AddSeries/AddSeries';
+import { useAddSeriesOptions } from 'AddSeries/addSeriesOptionsStore';
 import { useAppDimension } from 'App/appStore';
 import HeartRating from 'Components/HeartRating';
 import Icon from 'Components/Icon';
+import Button from 'Components/Link/Button';
 import Link from 'Components/Link/Link';
+import SpinnerButton from 'Components/Link/SpinnerButton';
 import MetadataAttribution from 'Components/MetadataAttribution';
-import { icons } from 'Helpers/Props';
+import { icons, kinds, sizes } from 'Helpers/Props';
+import { DEFAULT_LANGUAGE } from 'Language/Language';
 import { useLanguageById } from 'Language/useLanguages';
 import { Statistics } from 'Series/Series';
 import SeriesGenres from 'Series/SeriesGenres';
@@ -15,6 +19,7 @@ import useExistingSeries from 'Series/useExistingSeries';
 import { useMetadataSourceSettingsValues } from 'Settings/MetadataSource/useMetadataSourceSettings';
 import translate from 'Utilities/String/translate';
 import AddNewSeriesModal from './AddNewSeriesModal';
+import { useAddSeries } from './useAddSeries';
 import styles from './AddNewSeriesSearchResult.module.css';
 
 function getStatusChip(status: string) {
@@ -51,6 +56,7 @@ function AddNewSeriesSearchResult({ series }: AddNewSeriesSearchResultProps) {
     ratings,
     overview: lookupOverview,
     seriesType,
+    seasonTypes = [],
     translations,
     images,
     isExcluded,
@@ -61,6 +67,8 @@ function AddNewSeriesSearchResult({ series }: AddNewSeriesSearchResultProps) {
   const isExistingSeries = useExistingSeries(tvdbId);
   const isSmallScreen = useAppDimension('isSmallScreen');
   const [isNewAddSeriesModalOpen, setIsNewAddSeriesModalOpen] = useState(false);
+  const options = useAddSeriesOptions();
+  const { isAdding, addSeries } = useAddSeries();
 
   const seasonCount = statistics.seasonCount;
   const translation = translations.find((t) => t.language.id === language?.id);
@@ -70,6 +78,36 @@ function AddNewSeriesSearchResult({ series }: AddNewSeriesSearchResultProps) {
   const handlePress = useCallback(() => {
     setIsNewAddSeriesModalOpen(true);
   }, []);
+
+  const handleQuickAddPress = useCallback(() => {
+    if (!options.rootFolderPath || !options.qualityProfileId) {
+      setIsNewAddSeriesModalOpen(true);
+      return;
+    }
+
+    const effectiveSeriesType =
+      seriesType === 'standard' ? options.seriesType : seriesType;
+    const effectiveSeasonType =
+      seasonTypes.find((s) => s.type === 'official')?.type ??
+      seasonTypes[0]?.type ??
+      'official';
+
+    addSeries({
+      ...series,
+      rootFolderPath: options.rootFolderPath,
+      addOptions: {
+        monitor: options.monitor,
+        searchForMissingEpisodes: options.searchForMissingEpisodes,
+        searchForCutoffUnmetEpisodes: options.searchForCutoffUnmetEpisodes,
+      },
+      qualityProfileId: options.qualityProfileId,
+      seriesType: effectiveSeriesType,
+      seasonType: effectiveSeasonType,
+      language: language ?? DEFAULT_LANGUAGE,
+      seasonFolder: options.seasonFolder,
+      tags: options.tags,
+    });
+  }, [series, seriesType, seasonTypes, options, language, addSeries]);
 
   const handleAddSeriesModalClose = useCallback(() => {
     setIsNewAddSeriesModalOpen(false);
@@ -137,7 +175,35 @@ function AddNewSeriesSearchResult({ series }: AddNewSeriesSearchResultProps) {
                   size={24}
                   title={translate('AlreadyInYourLibrary')}
                 />
-              ) : null}
+              ) : (
+                <div className={styles.actionButtons}>
+                  <SpinnerButton
+                    className={styles.quickAddButton}
+                    kind={kinds.PRIMARY}
+                    size={sizes.SMALL}
+                    isSpinning={isAdding}
+                    title={translate('QuickAddSeriesTitle', { title })}
+                    onPress={handleQuickAddPress}
+                  >
+                    <Icon
+                      className={styles.quickAddIcon}
+                      name={icons.ADD}
+                      size={14}
+                    />
+                    {translate('QuickAdd')}
+                  </SpinnerButton>
+
+                  <Button
+                    className={styles.configureAddButton}
+                    kind={kinds.DEFAULT}
+                    size={sizes.SMALL}
+                    title={translate('AddSeriesWithTitle', { title })}
+                    onPress={handlePress}
+                  >
+                    <Icon name={icons.SETTINGS} size={14} />
+                  </Button>
+                </div>
+              )}
 
               {isExcluded ? (
                 <Icon

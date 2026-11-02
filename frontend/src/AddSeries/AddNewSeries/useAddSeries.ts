@@ -19,6 +19,13 @@ interface AddSeriesPayload
 
 const DEFAULT_SERIES: AddSeries[] = [];
 
+export type RecommendationListType =
+  | 'trending'
+  | 'popular'
+  | 'new'
+  | 'anticipated'
+  | 'topWatched';
+
 export const useLookupSeries = (
   query: string,
   language: Language,
@@ -34,6 +41,30 @@ export const useLookupSeries = (
       enabled: isEnabled && !!query,
       // Disable refetch on window focus to prevent refetching when the user switch tabs
       refetchOnWindowFocus: false,
+    },
+  });
+
+  return {
+    ...result,
+    data: result.data ?? DEFAULT_SERIES,
+  };
+};
+
+export const useRecommendedSeries = (
+  listType: RecommendationListType,
+  language: Language,
+  isEnabled = true
+) => {
+  const result = useApiQuery<AddSeries[]>({
+    path: '/series/lookup/recommended',
+    queryParams: {
+      listType,
+      language: language.id,
+    },
+    queryOptions: {
+      enabled: isEnabled,
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000,
     },
   });
 

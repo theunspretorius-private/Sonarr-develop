@@ -94,9 +94,38 @@
 .icons {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 
   flex-shrink: 0;
+}
+
+.actionButtons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  pointer-events: all;
+}
+
+.quickAddButton {
+  composes: button from 'Components/Link/SpinnerButton.module.css';
+
+  display: inline-flex;
+  align-items: center;
+  font-weight: 500;
+}
+
+.quickAddIcon {
+  margin-right: 4px;
+}
+
+.configureAddButton {
+  composes: button from 'Components/Link/Button.module.css';
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 8px;
 }
 
 .tvdbLink {

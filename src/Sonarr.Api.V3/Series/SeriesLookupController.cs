@@ -16,12 +16,18 @@ namespace Sonarr.Api.V3.Series
     public class SeriesLookupController : Controller
     {
         private readonly ISearchForNewSeries _searchProxy;
+        private readonly IProvideRecommendedSeries _recommendedSeriesProxy;
         private readonly IBuildFileNames _fileNameBuilder;
         private readonly IMapCoversToLocal _coverMapper;
 
-        public SeriesLookupController(ISearchForNewSeries searchProxy, IBuildFileNames fileNameBuilder, IMapCoversToLocal coverMapper)
+        public SeriesLookupController(
+            ISearchForNewSeries searchProxy,
+            IProvideRecommendedSeries recommendedSeriesProxy,
+            IBuildFileNames fileNameBuilder,
+            IMapCoversToLocal coverMapper)
         {
             _searchProxy = searchProxy;
+            _recommendedSeriesProxy = recommendedSeriesProxy;
             _fileNameBuilder = fileNameBuilder;
             _coverMapper = coverMapper;
         }
@@ -39,6 +45,21 @@ namespace Sonarr.Api.V3.Series
 
             var tvDbResults = _searchProxy.SearchForNewSeries(term, searchLanguage);
             return MapToResource(tvDbResults);
+        }
+
+        [HttpGet("recommended")]
+        public IEnumerable<SeriesResource> GetRecommended([FromQuery] RecommendationListType listType = RecommendationListType.Trending, [FromQuery] int? language = null)
+        {
+            var languageId = language ?? Language.English.Id;
+            var searchLanguage = Language.All.FirstOrDefault(l => l.Id == languageId);
+
+            if (searchLanguage == null || IsoLanguages.Get(searchLanguage) == null)
+            {
+                throw new BadRequestException($"Invalid language: {languageId}");
+            }
+
+            var results = _recommendedSeriesProxy.GetRecommendedSeries(listType, searchLanguage);
+            return MapToResource(results);
         }
 
         private IEnumerable<SeriesResource> MapToResource(IEnumerable<NzbDrone.Core.Tv.Series> series)

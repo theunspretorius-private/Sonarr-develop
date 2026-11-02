@@ -9,20 +9,19 @@ import PageContentBody from 'Components/Page/PageContentBody';
 import PageHeading from 'Components/Page/PageHeading';
 import useDebounce from 'Helpers/Hooks/useDebounce';
 import useQueryParams from 'Helpers/Hooks/useQueryParams';
-import { icons, kinds } from 'Helpers/Props';
+import { icons } from 'Helpers/Props';
 import { usePreferredMetadataLanguage } from 'Language/useLanguages';
-import { useHasSeries } from 'Series/useSeries';
 import MetadataSettingsModal from 'Settings/MetadataSource/MetadataSettingsModal';
 import { InputChanged } from 'typings/inputs';
 import getErrorMessage from 'Utilities/Object/getErrorMessage';
 import translate from 'Utilities/String/translate';
+import AddNewSeriesRecommendations from './AddNewSeriesRecommendations';
 import AddNewSeriesSearchResult from './AddNewSeriesSearchResult';
 import { useLookupSeries } from './useAddSeries';
 import styles from './AddNewSeries.module.css';
 
 function AddNewSeries() {
   const { term: initialTerm = '' } = useQueryParams<{ term: string }>();
-  const hasSeries = useHasSeries();
   const language = usePreferredMetadataLanguage();
   const [term, setTerm] = useState(initialTerm);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -149,28 +148,7 @@ function AddNewSeries() {
           </div>
         ) : null}
 
-        {term ? null : (
-          <div className={styles.emptyState}>
-            <div className={styles.emptyTitle}>
-              {translate('AddNewSeriesHelpText')}
-            </div>
-            <div className={styles.emptyBody}>
-              {translate('SearchByTvdbId')}
-            </div>
-
-            {hasSeries ? null : (
-              <>
-                <div className={styles.emptyDivider} />
-                <div className={styles.emptyNoLibrary}>
-                  {translate('NoSeriesHaveBeenAdded')}
-                </div>
-                <Button to="/add/import" kind={kinds.PRIMARY}>
-                  {translate('ImportExistingSeries')}
-                </Button>
-              </>
-            )}
-          </div>
-        )}
+        {term ? null : <AddNewSeriesRecommendations language={language} />}
 
         <MetadataSettingsModal
           isOpen={isMetadataSettingsModalOpen}

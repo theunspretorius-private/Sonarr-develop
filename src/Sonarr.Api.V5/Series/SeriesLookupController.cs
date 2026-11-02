@@ -18,14 +18,22 @@ namespace Sonarr.Api.V5.Series;
 public class SeriesLookupController : Controller
 {
     private readonly ISearchForNewSeries _searchProxy;
+    private readonly IProvideRecommendedSeries _recommendedSeriesProxy;
     private readonly IBuildFileNames _fileNameBuilder;
     private readonly IMapCoversToLocal _coverMapper;
     private readonly IImportListExclusionService _importListExclusionService;
     private readonly IConfigService _configService;
 
-    public SeriesLookupController(ISearchForNewSeries searchProxy, IBuildFileNames fileNameBuilder, IMapCoversToLocal coverMapper, IImportListExclusionService importListExclusionService, IConfigService configService)
+    public SeriesLookupController(
+        ISearchForNewSeries searchProxy,
+        IProvideRecommendedSeries recommendedSeriesProxy,
+        IBuildFileNames fileNameBuilder,
+        IMapCoversToLocal coverMapper,
+        IImportListExclusionService importListExclusionService,
+        IConfigService configService)
     {
         _searchProxy = searchProxy;
+        _recommendedSeriesProxy = recommendedSeriesProxy;
         _fileNameBuilder = fileNameBuilder;
         _coverMapper = coverMapper;
         _importListExclusionService = importListExclusionService;
@@ -46,6 +54,22 @@ public class SeriesLookupController : Controller
 
         var tvDbResults = _searchProxy.SearchForNewSeries(term, searchLanguage);
         return TypedResults.Ok(MapToResource(tvDbResults));
+    }
+
+    [HttpGet("recommended")]
+    [Produces("application/json")]
+    public Ok<IEnumerable<SeriesResource>> GetRecommended([FromQuery] RecommendationListType listType = RecommendationListType.Trending, [FromQuery] int? language = null)
+    {
+        var languageId = language ?? _configService.PreferredMetadataLanguage;
+        var searchLanguage = Language.All.FirstOrDefault(l => l.Id == languageId);
+
+        if (searchLanguage == null || IsoLanguages.Get(searchLanguage) == null)
+        {
+            throw new BadRequestException($"Invalid language: {languageId}");
+        }
+
+        var results = _recommendedSeriesProxy.GetRecommendedSeries(listType, searchLanguage);
+        return TypedResults.Ok(MapToResource(results));
     }
 
     private IEnumerable<SeriesResource> MapToResource(IEnumerable<NzbDrone.Core.Tv.Series> series)
