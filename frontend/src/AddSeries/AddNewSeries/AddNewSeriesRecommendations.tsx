@@ -70,14 +70,31 @@ function RecommendationTabButton({
   );
 }
 
-function DefaultRootFolderInitializer() {
-  const { data: rootFolders } = useRootFolders();
+interface DefaultRootFolderInitializerProps {
+  rootFolderPath: string;
+}
+
+// Ensures quick add always targets an existing root folder. A remembered path
+// that was since removed (or renamed) would otherwise be used to build the new
+// series path, leaving imports to move files into a folder Sonarr doesn't manage.
+function DefaultRootFolderInitializer({
+  rootFolderPath,
+}: DefaultRootFolderInitializerProps) {
+  const { data: rootFolders, isFetched } = useRootFolders();
 
   useEffect(() => {
-    if (rootFolders.length > 0 && rootFolders[0].path) {
-      setAddSeriesOption('rootFolderPath', rootFolders[0].path);
+    if (!isFetched) {
+      return;
     }
-  }, [rootFolders]);
+
+    const isKnown = rootFolders.some((r) => r.path === rootFolderPath);
+
+    if (isKnown) {
+      return;
+    }
+
+    setAddSeriesOption('rootFolderPath', rootFolders[0]?.path ?? '');
+  }, [isFetched, rootFolders, rootFolderPath]);
 
   return null;
 }
@@ -105,7 +122,10 @@ function AddNewSeriesRecommendations({
   } = useAddSeriesOptions();
 
   useEffect(() => {
-    if (!qualityProfileId && qualityProfiles.length > 0) {
+    if (
+      qualityProfiles.length > 0 &&
+      !qualityProfiles.some((p) => p.id === qualityProfileId)
+    ) {
       setAddSeriesOption('qualityProfileId', qualityProfiles[0].id);
     }
   }, [qualityProfileId, qualityProfiles]);
@@ -158,9 +178,9 @@ function AddNewSeriesRecommendations({
 
   return (
     <div className={styles.container}>
-      {!rootFolderPath && !isDefaultsOpen ? (
-        <DefaultRootFolderInitializer />
-      ) : null}
+      {isDefaultsOpen ? null : (
+        <DefaultRootFolderInitializer rootFolderPath={rootFolderPath} />
+      )}
 
       {hasSeries ? null : (
         <div className={styles.importCallout}>

@@ -1,6 +1,7 @@
-using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
@@ -20,24 +21,29 @@ namespace NzbDrone.Core.Test.MetadataSource
         public void Setup()
         {
             Mocker.GetMock<ISeriesService>()
-                  .Setup(s => s.GetAllSeries())
-                  .Returns(new List<Series>());
+                  .Setup(s => s.AllSeriesTvdbIds())
+                  .Returns(new Dictionary<int, int>());
+        }
+
+        private void GivenTraktResponse(string pathSuffix, string json)
+        {
+            Mocker.GetMock<IHttpClient>()
+                  .Setup(c => c.GetAsync(It.Is<HttpRequest>(r => r.Url.Path.EndsWith(pathSuffix)), It.IsAny<CancellationToken>()))
+                  .Returns<HttpRequest, CancellationToken>((r, _) => Task.FromResult(new HttpResponse(r, new HttpHeader(), json, HttpStatusCode.OK)));
+        }
+
+        private void GivenLookup(int tvdbId, Series series)
+        {
+            Mocker.GetMock<ISearchForNewSeries>()
+                  .Setup(p => p.LookupSeriesByTvdbIdAsync(tvdbId, Language.English, It.IsAny<CancellationToken>()))
+                  .ReturnsAsync(series);
         }
 
         [Test]
         public void should_return_recommended_trending_series()
         {
-            var traktJson = "[{\"watchers\":100,\"show\":{\"title\":\"Severance\",\"year\":2022,\"ids\":{\"trakt\":1,\"tvdb\":371980,\"imdb\":\"tt11280740\"}}}]";
-
-            Mocker.GetMock<IHttpClient>()
-                  .Setup(c => c.Get(It.Is<HttpRequest>(r => r.Url.Path.EndsWith("/shows/trending"))))
-                  .Returns<HttpRequest>(r => new HttpResponse(r, new HttpHeader(), traktJson, HttpStatusCode.OK));
-
-            var expectedSeries = new Series { TvdbId = 371980, Title = "Severance" };
-
-            Mocker.GetMock<IProvideSeriesInfo>()
-                  .Setup(p => p.GetSeriesInfo(371980, Language.English, SeasonType.Official))
-                  .Returns(Tuple.Create(expectedSeries, new List<Episode>()));
+            GivenTraktResponse("/shows/trending", "[{\"watchers\":100,\"show\":{\"title\":\"Severance\",\"year\":2022,\"ids\":{\"trakt\":1,\"tvdb\":371980,\"imdb\":\"tt11280740\"}}}]");
+            GivenLookup(371980, new Series { TvdbId = 371980, Title = "Severance" });
 
             var result = Subject.GetRecommendedSeries(RecommendationListType.Trending, Language.English);
 
@@ -49,17 +55,8 @@ namespace NzbDrone.Core.Test.MetadataSource
         [Test]
         public void should_return_recommended_popular_series()
         {
-            var traktJson = "[{\"title\":\"Breaking Bad\",\"year\":2008,\"ids\":{\"trakt\":2,\"tvdb\":81189,\"imdb\":\"tt0903747\"}}]";
-
-            Mocker.GetMock<IHttpClient>()
-                  .Setup(c => c.Get(It.Is<HttpRequest>(r => r.Url.Path.EndsWith("/shows/popular"))))
-                  .Returns<HttpRequest>(r => new HttpResponse(r, new HttpHeader(), traktJson, HttpStatusCode.OK));
-
-            var expectedSeries = new Series { TvdbId = 81189, Title = "Breaking Bad" };
-
-            Mocker.GetMock<IProvideSeriesInfo>()
-                  .Setup(p => p.GetSeriesInfo(81189, Language.English, SeasonType.Official))
-                  .Returns(Tuple.Create(expectedSeries, new List<Episode>()));
+            GivenTraktResponse("/shows/popular", "[{\"title\":\"Breaking Bad\",\"year\":2008,\"ids\":{\"trakt\":2,\"tvdb\":81189,\"imdb\":\"tt0903747\"}}]");
+            GivenLookup(81189, new Series { TvdbId = 81189, Title = "Breaking Bad" });
 
             var result = Subject.GetRecommendedSeries(RecommendationListType.Popular, Language.English);
 
@@ -71,16 +68,16 @@ namespace NzbDrone.Core.Test.MetadataSource
         [Test]
         public void should_use_existing_series_when_in_library()
         {
-            var traktJson = "[{\"watchers\":100,\"show\":{\"title\":\"Severance\",\"year\":2022,\"ids\":{\"trakt\":1,\"tvdb\":371980}}}]";
-
-            Mocker.GetMock<IHttpClient>()
-                  .Setup(c => c.Get(It.IsAny<HttpRequest>()))
-                  .Returns<HttpRequest>(r => new HttpResponse(r, new HttpHeader(), traktJson, HttpStatusCode.OK));
+            GivenTraktResponse("/shows/trending", "[{\"watchers\":100,\"show\":{\"title\":\"Severance\",\"year\":2022,\"ids\":{\"trakt\":1,\"tvdb\":371980}}}]");
 
             var existingSeries = new Series { Id = 42, TvdbId = 371980, Title = "Severance" };
 
             Mocker.GetMock<ISeriesService>()
-                  .Setup(s => s.GetAllSeries())
+                  .Setup(s => s.AllSeriesTvdbIds())
+                  .Returns(new Dictionary<int, int> { { 42, 371980 } });
+
+            Mocker.GetMock<ISeriesService>()
+                  .Setup(s => s.GetSeries(It.IsAny<IEnumerable<int>>()))
                   .Returns(new List<Series> { existingSeries });
 
             var result = Subject.GetRecommendedSeries(RecommendationListType.Trending, Language.English);
@@ -88,27 +85,34 @@ namespace NzbDrone.Core.Test.MetadataSource
             result.Should().ContainSingle();
             result[0].Should().BeSameAs(existingSeries);
 
-            Mocker.GetMock<IProvideSeriesInfo>()
-                  .Verify(p => p.GetSeriesInfo(It.IsAny<int>(), It.IsAny<Language>(), It.IsAny<string>()), Times.Never());
+            Mocker.GetMock<ISearchForNewSeries>()
+                  .Verify(p => p.LookupSeriesByTvdbIdAsync(It.IsAny<int>(), It.IsAny<Language>(), It.IsAny<CancellationToken>()), Times.Never());
         }
 
         [Test]
         public void should_skip_series_not_found_on_skyhook()
         {
-            var traktJson = "[{\"watchers\":100,\"show\":{\"title\":\"Missing Show\",\"year\":2026,\"ids\":{\"trakt\":1,\"tvdb\":999999}}}]";
+            GivenTraktResponse("/shows/trending", "[{\"watchers\":100,\"show\":{\"title\":\"Missing Show\",\"year\":2026,\"ids\":{\"trakt\":1,\"tvdb\":999999}}}]");
 
-            Mocker.GetMock<IHttpClient>()
-                  .Setup(c => c.Get(It.IsAny<HttpRequest>()))
-                  .Returns<HttpRequest>(r => new HttpResponse(r, new HttpHeader(), traktJson, HttpStatusCode.OK));
-
-            Mocker.GetMock<IProvideSeriesInfo>()
-                  .Setup(p => p.GetSeriesInfo(999999, Language.English, SeasonType.Official))
-                  .Throws(new SeriesNotFoundException(999999));
+            Mocker.GetMock<ISearchForNewSeries>()
+                  .Setup(p => p.LookupSeriesByTvdbIdAsync(999999, Language.English, It.IsAny<CancellationToken>()))
+                  .ThrowsAsync(new SeriesNotFoundException(999999));
 
             var result = Subject.GetRecommendedSeries(RecommendationListType.New, Language.English);
 
             result.Should().BeEmpty();
         }
+
+        [Test]
+        public void should_return_empty_when_trakt_errors()
+        {
+            Mocker.GetMock<IHttpClient>()
+                  .Setup(c => c.GetAsync(It.IsAny<HttpRequest>(), It.IsAny<CancellationToken>()))
+                  .Returns<HttpRequest, CancellationToken>((r, _) => Task.FromResult(new HttpResponse(r, new HttpHeader(), "", HttpStatusCode.ServiceUnavailable)));
+
+            var result = Subject.GetRecommendedSeries(RecommendationListType.Trending, Language.English);
+
+            result.Should().BeEmpty();
+        }
     }
 }
-

@@ -25,7 +25,6 @@ namespace NzbDrone.Core.MetadataSource
         private const int MaxConcurrency = 4;
 
         private readonly IHttpClient _httpClient;
-        private readonly IProvideSeriesInfo _seriesInfo;
         private readonly ISearchForNewSeries _searchProxy;
         private readonly ISeriesService _seriesService;
         private readonly ICached<List<TraktSeriesResource>> _traktListCache;
@@ -34,14 +33,12 @@ namespace NzbDrone.Core.MetadataSource
 
         public RecommendedSeriesService(
             IHttpClient httpClient,
-            IProvideSeriesInfo seriesInfo,
             ISearchForNewSeries searchProxy,
             ISeriesService seriesService,
             ICacheManager cacheManager,
             Logger logger)
         {
             _httpClient = httpClient;
-            _seriesInfo = seriesInfo;
             _searchProxy = searchProxy;
             _seriesService = seriesService;
             _traktListCache = cacheManager.GetCache<List<TraktSeriesResource>>(GetType(), "traktLists");
@@ -123,9 +120,7 @@ namespace NzbDrone.Core.MetadataSource
 
             if (allTvdbIds == null || allTvdbIds.Count == 0)
             {
-                return _seriesService.GetAllSeries()
-                    .GroupBy(s => s.TvdbId)
-                    .ToDictionary(g => g.Key, g => g.First());
+                return new Dictionary<int, Series>();
             }
 
             var candidateTvdbIds = traktShows
@@ -185,7 +180,7 @@ namespace NzbDrone.Core.MetadataSource
                 var request = requestBuilder.Build();
                 request.SuppressHttpError = true;
 
-                var response = await _httpClient.GetAsync(request, cancellationToken) ?? _httpClient.Get(request);
+                var response = await _httpClient.GetAsync(request, cancellationToken);
 
                 if (response == null || response.HasHttpError || response.StatusCode != HttpStatusCode.OK)
                 {
@@ -234,8 +229,7 @@ namespace NzbDrone.Core.MetadataSource
                         return cached;
                     }
 
-                    var resolved = await _searchProxy.LookupSeriesByTvdbIdAsync(tvdbId, language, cancellationToken)
-                        ?? _seriesInfo.GetSeriesInfo(tvdbId, language, SeasonType.Official)?.Item1;
+                    var resolved = await _searchProxy.LookupSeriesByTvdbIdAsync(tvdbId, language, cancellationToken);
 
                     if (resolved != null)
                     {
